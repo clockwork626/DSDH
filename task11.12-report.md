@@ -162,7 +162,7 @@
 产出：
   1) 终端打印两人各自 Top10 高权重词表（Word / TF-IDF Score 两列）
   2) 两张 TF-IDF 词云：libai_wordcloud.png / dufu_wordcloud.png（透明背景，SimHei 字体）
-  3) 原文核查记录：对指定高频词（明月/春风、万里/白首）回溯 CSV 原文，
+  3) 原文核查记录：对两人各自 Top10 高权重词逐词回溯 CSV 原文，
      打印包含该词的诗句片段，每词至多 2 句
 
 依赖安装：
@@ -186,12 +186,6 @@ WC_FILES = {"李白": "libai_wordcloud.png", "杜甫": "dufu_wordcloud.png"}
 TOP_N_TABLE = 10       # 终端关键词表条数
 TOP_N_CLOUD = 60       # 词云收录词数
 CTX = 7                # 原文核查：词语前后各展示的字数（语料无标点，截取上下文窗口作近似诗句）
-
-# 原文核查目标词（可按需增删）
-CHECK_WORDS = {
-    "李白": ["明月", "春风"],
-    "杜甫": ["万里", "白首"],
-}
 
 # 中文字体：优先黑体 SimHei，其次微软雅黑
 FONT_CANDIDATES = [r"C:\Windows\Fonts\simhei.ttf", r"C:\Windows\Fonts\msyh.ttc"]
@@ -278,8 +272,8 @@ def make_wordclouds(top60):
         print(f"词云已保存：{WC_FILES[a]}")
 
 
-def verify_in_source(df):
-    """原文核查记录：对指定高频词回到 CSV 原文，打印包含该词的诗句片段。
+def verify_in_source(df, top10):
+    """原文核查记录：对两人各自 Top10 高权重词回到 CSV 原文，打印包含该词的诗句片段。
 
     语料已清洗为纯汉字（无标点），故截取词语前后各 CTX 字的上下文窗口作近似诗句，
     并用【】标出目标词。每词至多打印 2 句。
@@ -287,7 +281,7 @@ def verify_in_source(df):
     print("\n===== 原文核查记录 =====")
     for a in AUTHORS:
         texts = df.loc[df["author"] == a, "text"].astype(str).tolist()
-        for word in CHECK_WORDS[a]:
+        for word, _ in top10[a]:
             print(f"\n▶ {a} ·「{word}」")
             hits = 0
             for text in texts:
@@ -311,8 +305,9 @@ def main():
     top10, top60 = build_tfidf(df)
     print_tables(top10)
     make_wordclouds(top60)
-    verify_in_source(df)
+    verify_in_source(df, top10)
 
 
 if __name__ == "__main__":
     main()
+
